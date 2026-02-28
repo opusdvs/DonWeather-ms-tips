@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"log"
 
 	"github.com/opusdvs/DonWeather-ms-tips/internal/domain"
 )
@@ -21,14 +22,16 @@ func NewTipsService(
 	}
 }
 
-func (ts *TipsService) GetTips(ctx context.Context, weather *domain.Weather) (*domain.Tip, error) {
+func (ts *TipsService) GetTips(ctx context.Context, weather *domain.Weather) (*domain.Tips, error) {
 	predict, err := ts.predictProvider.GetPrediction(ctx, weather)
 	if err != nil {
+		log.Println("Error getting prediction", err)
 		return nil, err
 	}
-	tip, err := ts.tipsProvider.GetTips(ctx, predict, weather)
+	tips, err := ts.tipsProvider.GetTips(ctx, predict, weather)
 	if err != nil {
+		log.Println("Error getting tips", err)
 		return nil, err
 	}
-	return tip, nil
+	return tips, nil
 }

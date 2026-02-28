@@ -7,5 +7,5 @@ type PredictionProvider interface {
 }
 
 type TipsProvider interface {
-	GetTips(ctx context.Context, predoct *Prediction, weather *Weather) (*Tip, error)
+	GetTips(ctx context.Context, predoct *Prediction, weather *Weather) (*Tips, error)
 }

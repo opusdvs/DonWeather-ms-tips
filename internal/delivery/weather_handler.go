@@ -43,15 +43,36 @@ func (th *TipsHandler) GetTips(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	for _, tip := range tips.Output {
-		tipsResponse.Tips = append(tipsResponse.Tips, domain.Tip{
-			Text: extractJSON(tip.Content[0].Text),
-		})
+
+	for _, output := range tips.Output {
+		raw := extractJSON(output.Content[0].Text)
+
+		// Пытаемся разобрать JSON вида {"tips":[{"text":"..."}, ...]}
+		var parsed struct {
+			Tips []struct {
+				Text string `json:"text"`
+			} `json:"tips"`
+		}
+
+		if err := json.Unmarshal([]byte(raw), &parsed); err != nil || len(parsed.Tips) == 0 {
+			// fallback: возвращаем как есть, одной строкой
+			tipsResponse.Tips = append(tipsResponse.Tips, domain.Tip{Text: raw})
+			continue
+		}
+
+		for _, t := range parsed.Tips {
+			if t.Text == "" {
+				continue
+			}
+			tipsResponse.Tips = append(tipsResponse.Tips, domain.Tip{Text: t.Text})
+		}
 	}
 
-	json.NewEncoder(w).Encode(tipsResponse)
-
 	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(tipsResponse); err != nil {
+		log.Println("Error encoding tips response", err)
+	}
+	log.Printf("tips response: %+v", tipsResponse)
 }
 
 func extractJSON(text string) string {

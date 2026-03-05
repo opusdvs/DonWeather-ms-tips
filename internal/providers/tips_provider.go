@@ -27,13 +27,21 @@ func NewTipsProvider(apiUrl string) *TipsProvider {
 }
 
 func (ts *TipsProvider) GetTips(ctx context.Context, prediction *domain.Prediction, weather *domain.Weather) (*domain.Tips, error) {
-	log.Println("Getting tips", prediction, weather)
-	data, err := json.Marshal(prediction)
+	// При минусовой температуре считаем вероятность дождя равной 0 (осадки — снег)
+	predForLLM := *prediction
+	if weather.Temperature < 0 {
+		predForLLM.RainProbability = 0
+	}
+	// Передаём в LLM предсказание и текущую температуру (для правила «при минусовой — не зонт»)
+	reqBody := struct {
+		*domain.Prediction
+		Temperature float64 `json:"temperature,omitempty"`
+	}{Prediction: &predForLLM, Temperature: weather.Temperature}
+	data, err := json.Marshal(reqBody)
 	if err != nil {
 		log.Println("Error marshalling prediction", err)
 		return nil, err
 	}
-	log.Println("Tips data", string(data))
 	request, err := http.NewRequestWithContext(ctx, "POST", ts.apiUrl, bytes.NewBuffer(data))
 	if err != nil {
 		log.Println("Error creating request", err)
@@ -46,18 +54,16 @@ func (ts *TipsProvider) GetTips(ctx context.Context, prediction *domain.Predicti
 		return nil, err
 	}
 	defer response.Body.Close()
-	body, err := io.ReadAll(response.Body)
+	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		log.Println("Error reading response body", err)
 		return nil, err
 	}
-	log.Println("Tips response", string(body))
 	var tip domain.Tips
-	err = json.Unmarshal(body, &tip)
+	err = json.Unmarshal(respBody, &tip)
 	if err != nil {
 		log.Println("Error unmarshalling response body", err)
 		return nil, err
 	}
-	log.Println("Tips datac", tip)
 	return &tip, nil
 }

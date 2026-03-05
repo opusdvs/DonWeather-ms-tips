@@ -46,6 +46,7 @@ type Prediction struct {
 	TempDelta       float64 `json:"temp_delta"`
 	RainProbability float64 `json:"rain_probability"`
 	WindProbability float64 `json:"wind_probability"`
+	SnowProbability float64 `json:"snow_probability"`
 }
 
 // Tips — ответ API LLM (Yandex GPT и т.п.) с советом по погоде

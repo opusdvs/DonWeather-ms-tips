@@ -20,13 +20,13 @@ func main() {
 	if predictApiUrl == "" {
 		log.Fatal("PREDICT_API_URL is not set")
 	}
-	ollamaApiUrl := os.Getenv("OLLAMA_API_URL")
-	if ollamaApiUrl == "" {
-		log.Fatal("OLLAMA_API_URL is not set")
+	llmApiUrl := os.Getenv("LLM_API_URL")
+	if llmApiUrl == "" {
+		log.Fatal("LLM_API_URL is not set.")
 	}
 
 	predictProvider := providers.NewPredictionProvider(predictApiUrl)
-	tipsProvider := providers.NewTipsProvider(ollamaApiUrl)
+	tipsProvider := providers.NewTipsProvider(llmApiUrl)
 	tipsService := usecase.NewTipsService(predictProvider, tipsProvider)
 	tipsHandler := delivery.NewTipsHandler(tipsService)
 
